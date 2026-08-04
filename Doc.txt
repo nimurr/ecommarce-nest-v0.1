@@ -1,0 +1,95 @@
+================= Installations ================
+
+1.  npm i -g @nestjs/cli
+2.  nest new project-name
+3.  npm i prisma@latest @prisma/client@latest @prisma/config @prisma/adapter-pg pg
+
+
+====================== Connect prisma and Postgres db ========================
+
+1. npx prisma init 
+2. connect bd with nest.js server using DB
+3. Design Database schema in schema.prisma 
+4. npx prisma migrate dev --name init 
+
+
+
+=============================== Create Module or setup ===================================
+
+1. npx nest g module prisma 
+2. npx nest g service prisma
+3.config prisma.service file ===> 
+
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '@prisma/client';
+
+@Injectable()
+export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+
+    constructor() {
+        const adapter = new PrismaPg({
+            connectionString: process.env.DATABASE_URL,
+
+        })
+        super({
+            adapter,
+            log: process.env.NODE_ENV === 'development' ?
+                ['query', 'info', 'warn', 'error']
+                : ['error'],
+        })
+    }
+
+    async onModuleInit() {
+        await this.$connect();
+        console.log('✅ Database connected successfully');
+    }
+
+    async onModuleDestroy() {
+        await this.$disconnect();
+        console.log('⚠️ Database disconnected successfully');
+    }
+
+    async cleanDatabase() {
+        if (process.env.NODE_ENV === 'production') {
+            throw new Error('Cannot clean database in production');
+        }
+
+        const models = Reflect.ownKeys(this).filter((key) => {
+            return typeof key === 'string' && key[0] !== '_' && key[0] !== '$';
+        });
+
+        return Promise.all(
+            models.map((modelKey) => {
+                return (this as any)[modelKey].deleteMany();
+            }),
+        );
+    }
+
+
+
+}
+
+
+4. npx prisma generate 
+5. npm run dev
+
+
+
+
+=============================== make api =========================
+
+1. npx nest g module modules/auth 
+   npx nest g module modules/orders etc.
+
+2. npx nest g service modules/auth
+
+
+3. npx nest g controller modules/auth
+
+
+
+============================ packages ===============
+
+validator dto :-   npm i class-validator
+

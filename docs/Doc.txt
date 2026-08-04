@@ -1,0 +1,10 @@
+================= Installations ================
+
+1.  npm i -g @nestjs/cli
+2.  nest new project-name
+3.  npm i prisma@latest @prisma/client@latest @prisma/config @prisma/adapter-pg pg
+
+
+====================== Connect prisma and Postgres db ========================
+
+1. 
