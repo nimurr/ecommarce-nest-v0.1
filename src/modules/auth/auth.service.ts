@@ -47,6 +47,31 @@ export class AuthService {
         }
     }
 
+    async loginUser(loginDto: AuthRegisterDto): Promise<AuthResponseDto> {
+        const { email, password } = loginDto;
+
+        const user = await this.prisma.user.findUnique({
+            where: { email },
+        });
+
+        if (!user) {
+            throw new ConflictException('User not found');
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+
+        if (!isPasswordValid) {
+            throw new ConflictException('Invalid password');
+        }
+
+        const tokens = await this.generateTokens(user.id, user.email, user.role);
+        return tokens;
+    }
+
+    async getProfile(): Promise<string> {
+        return 'Profile';
+    }
+
     private async generateTokens(
         userId: string,
         email: string,
