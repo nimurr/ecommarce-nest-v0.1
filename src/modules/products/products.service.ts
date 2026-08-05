@@ -38,4 +38,23 @@ export class ProductsService {
 
         return response;
     }
+
+    async getAllProducts(): Promise<ProductResponseDto[]> {
+        const products = await this.prisma.product.findMany({
+            where: { isActive: true },
+        });
+
+        return products.map((product) => {
+            const response = new ProductResponseDto();
+            response.id = product.id;
+            response.name = product.name;
+            response.description = product.description;
+            response.price = product.price;
+            response.imageUrl = product.imageUrl ?? undefined;
+            response.stock = product.stock;
+            response.sku = product.sku;
+            response.categoryId = product.categoryId ?? undefined;
+            return response;
+        });
+    }
 }
