@@ -4,6 +4,7 @@ import {
     Post,
     UseInterceptors,
     UploadedFile,
+    Get,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -18,7 +19,7 @@ export class ProductsController {
     constructor(private readonly productsService: ProductsService) { }
 
     @Post('create')
-   @UseInterceptors(FileInterceptor('imageUrl', multerImageConfig('products')))
+    @UseInterceptors(FileInterceptor('imageUrl', multerImageConfig('products')))
     async createProduct(
         @Body() createProductDto: CreateProductDto,
         @UploadedFile() file: Express.Multer.File,
@@ -26,4 +27,10 @@ export class ProductsController {
         const imageUrl = file ? `/uploads/products/${file.filename}` : undefined;
         return this.productsService.createProduct(createProductDto, imageUrl);
     }
+
+    @Get('all')
+    async getAllProducts(): Promise<ProductResponseDto[]> {
+        return this.productsService.getAllProducts();
+    }
+
 }
