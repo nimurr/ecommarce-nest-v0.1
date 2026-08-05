@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AuthResponseDto } from './dto/auth-response.dto';
@@ -38,7 +38,6 @@ export class AuthService {
                 },
             });
 
-            // JWT fail korle eta throw kore fel dibe, kintu user already create hoye geche
             const tokens = await this.generateTokens(newUser.id, newUser.email, newUser.role);
             return tokens;
         } catch (error) {
@@ -68,8 +67,17 @@ export class AuthService {
         return tokens;
     }
 
-    async getProfile(): Promise<string> {
-        return 'Profile';
+    async getProfile(userId: string) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            omit: { password: true },
+        });
+
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        return user;
     }
 
     private async generateTokens(
