@@ -1,16 +1,28 @@
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { ValidationPipe } from '@nestjs/common';
+import { join } from 'path';
 import { AppModule } from './app.module';
-import { Logger } from '@nestjs/common';
+import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+    }),
+  );
 
   app.setGlobalPrefix('api/v1');
 
-  await app.listen(process.env.PORT ?? 3001);
+  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+    prefix: '/uploads',
+  });
+
+  app.useGlobalFilters(new AllExceptionsFilter());
+
+  await app.listen(3000);
 }
-bootstrap().catch((err) => {
-  console.error('Error starting the application:', err);
-  Logger.error('Error starting the application:', err);
-  process.exit(1);
-});
+bootstrap();
