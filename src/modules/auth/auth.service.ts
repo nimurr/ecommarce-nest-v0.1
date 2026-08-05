@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AuthResponseDto } from './dto/auth-response.dto';
@@ -38,13 +38,46 @@ export class AuthService {
                 },
             });
 
-            // JWT fail korle eta throw kore fel dibe, kintu user already create hoye geche
             const tokens = await this.generateTokens(newUser.id, newUser.email, newUser.role);
             return tokens;
         } catch (error) {
             console.error('Error creating user:', error);
             throw new InternalServerErrorException('Failed to create user');
         }
+    }
+
+    async loginUser(loginDto: AuthRegisterDto): Promise<AuthResponseDto> {
+        const { email, password } = loginDto;
+
+        const user = await this.prisma.user.findUnique({
+            where: { email },
+        });
+
+        if (!user) {
+            throw new ConflictException('User not found');
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+
+        if (!isPasswordValid) {
+            throw new ConflictException('Invalid password');
+        }
+
+        const tokens = await this.generateTokens(user.id, user.email, user.role);
+        return tokens;
+    }
+
+    async getProfile(userId: string) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            omit: { password: true },
+        });
+
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        return user;
     }
 
     private async generateTokens(
